@@ -31,9 +31,18 @@ import { logError } from "./logger.js"
 // enforcement (Repository).
 // ============================================================================
 
+type Brand<K, T> = K & { __brand: T }
+type OrderId = Brand<string, "OrderId">
+
+function createOrderId(raw: string): OrderId {
+	if (!/^ORD-\d{5,}$/.test(raw))
+		throw new Error("OrderId must match ORD-XXXXX format")
+	return raw as OrderId
+}
+
 export function exercise5_IdentityCrisis() {
 	type Order = {
-		orderId: string // Just a string - could be anything!
+		orderId: OrderId // Just a string - could be anything!
 		customerName: string
 		total: number
 	}
@@ -42,29 +51,38 @@ export function exercise5_IdentityCrisis() {
 	// Use a factory function that enforces a consistent format.
 	// Consider who is responsible for uniqueness (hint: Repository pattern).
 
+	const Ids = new Set<OrderId>()
+
+    function addOrder(order: Order) {
+    	if (Ids.has(order.orderId)) {
+    		throw new Error(`Duplicate OrderId detected: ${order.orderId}`)
+    	}
+
+    	Ids.add(order.orderId)
+    	orders.push(order)
+    }
 	// What makes a valid order ID? Nothing enforced!
-	const orders: Order[] = [
-		{
-			orderId: "", // Silent bug! Empty ID
-			customerName: "Alice",
-			total: 25,
-		},
-		{
-			orderId: "12345", // Is this valid?
-			customerName: "Bob",
-			total: 30,
-		},
-		{
-			orderId: "12345", // Silent bug! Duplicate ID
-			customerName: "Charlie",
-			total: 15,
-		},
-		{
-			orderId: "not-a-number", // Silent bug! Inconsistent format
-			customerName: "Diana",
-			total: 20,
-		},
-	]
+	const orders: Order[] = []
+//    {
+//      orderId: createOrderId(""), // Silent bug! Empty ID
+//      customerName: "Alice",
+//      total: 25,
+//    }
+    addOrder({
+      orderId: createOrderId("ORD-12345"), // Is this valid?
+      customerName: "Bob",
+      total: 30,
+    })
+    addOrder({
+      orderId: createOrderId("ORD-12345"), // Silent bug! Duplicate ID
+      customerName: "Charlie",
+      total: 15,
+    })
+//    {
+//      orderId: createOrderId("not-a-number"), // Silent bug! Inconsistent format
+//      customerName: "Diana",
+//      total: 20,
+//    }
 
 	logError(5, "Order ID chaos - duplicates, empty, inconsistent formats", {
 		orders,
