@@ -23,16 +23,26 @@ import { logError } from "./logger.js"
 // make them explicit and impossible to bypass.
 // ============================================================================
 
+type Brand<K, T> = K & { __brand: T }
+type Quantity = Brand<number, "Quantity">
+
+function createQuantity(n: number): Quantity {
+	if (!Number.isInteger(n)) throw new Error("Quantity must be a whole number")
+    if (n <= 0) throw new Error("Quantity must be positive")
+   	if (n > 100) throw new Error("Quantity exceeds maximum per order")
+    return n as Quantity
+   }
+
 export function exercise2_PrimitiveQuantity() {
 	type Order = {
 		itemName: string
-		quantity: number // Could be 0, negative, or absurdly high!
+		quantity: Quantity // Could be 0, negative, or absurdly high!
 		pricePerUnit: number
 	}
 
 	const order: Order = {
 		itemName: "Pizza",
-		quantity: -3, // Silent bug! Negative quantity
+		quantity: createQuantity(-3), // Silent bug! Negative quantity
 		pricePerUnit: 15,
 	}
 
@@ -50,10 +60,10 @@ export function exercise2_PrimitiveQuantity() {
 
 	// Another silent bug - absurd quantity
 	const bulkOrder: Order = {
-		itemName: "Coffee",
-		quantity: 50000, // Silent bug! Unrealistic quantity
-		pricePerUnit: 3,
-	}
+    itemName: "Coffee",
+    quantity: createQuantity(5000), // Silent bug! Unrealistic quantity
+    pricePerUnit: 3,
+  }
 
 	logError(2, "Absurd quantity accepted without validation", {
 		order: bulkOrder,
